@@ -1,24 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:gravity="center_horizontal"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
 
-    <cn.example.wang.bannermodule.view.BannerView
+
+    <cn.example.wang.bannermodule.view.BannerViewLayout
         android:id="@+id/bannerView"
-        android:clipChildren="false"
-        android:background="#ffffff"
         android:layout_width="match_parent"
-        android:layout_height="200dp">
+        android:layout_height="200dp"
+        android:background="#ffffff"
+        android:clipChildren="false">
 
-    </cn.example.wang.bannermodule.view.BannerView>
+        <LinearLayout
+            android:tag="indicator_container"
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:layout_gravity="bottom"
+            android:background="#66333333"
+            android:gravity="center_horizontal|center_vertical"
+            android:orientation="horizontal">
+
+        </LinearLayout>
+
+    </cn.example.wang.bannermodule.view.BannerViewLayout>
+
 
     <Button
         android:id="@+id/btn1"
-        android:text="更新数据"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="更新数据" />
 
 
 </LinearLayout>

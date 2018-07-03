@@ -2,10 +2,10 @@ package cn.example.wang.bannermodule.view;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
@@ -18,12 +18,10 @@ import android.widget.ImageView;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.example.wang.bannermodule.BannerConstant;
-import cn.example.wang.bannermodule.BannerImageLoad;
-import cn.example.wang.bannermodule.BannerIndicatorManager;
+import cn.example.wang.bannermodule.BannerImageLoadImpl;
 import cn.example.wang.bannermodule.WeakHandler;
-import cn.example.wang.bannermodule.base.BaseImageLoadIF;
-import cn.example.wang.bannermodule.base.BaseIndicatorIF;
+import cn.example.wang.bannermodule.base.IBaseImageLoad;
+import cn.example.wang.bannermodule.base.IBaseIndicator;
 import cn.example.wang.bannermodule.listener.BannerOnPagerChangeListener;
 import cn.example.wang.bannermodule.listener.BannerPagerClickListener;
 import cn.example.wang.bannermodule.transformer.ABaseTransformer;
@@ -35,22 +33,24 @@ import cn.example.wang.bannermodule.transformer.ABaseTransformer;
  * 3.setIndicatorManager 方法只有在create之前有效
  */
 
-public class BannerView extends FrameLayout {
+public class BannerViewLayout extends FrameLayout {
 
     private int addViewCount = 4;
     private int addNumber = 2;
 
-    public BannerView(Context context) {
+    private String mIndicatorTAG = "indicator_container";
+
+    public BannerViewLayout(Context context) {
         super(context);
         init(context, null);
     }
 
-    public BannerView(Context context, AttributeSet attrs) {
+    public BannerViewLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs);
     }
 
-    public BannerView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public BannerViewLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context, attrs);
     }
@@ -58,7 +58,7 @@ public class BannerView extends FrameLayout {
     private BannerViewPager mViewPager;
     private List<Object> mImagUrls;
     private List<View> mViews;
-    private BaseImageLoadIF mImageLoad;
+    private IBaseImageLoad mImageLoad;
     private ImageView.ScaleType mScaleType = ImageView.ScaleType.CENTER_CROP;
     private ImageAdapter mImageAdapter;
     private int mCount;
@@ -66,17 +66,14 @@ public class BannerView extends FrameLayout {
     private int mStartPosition = 2;
     private boolean isAutoPlay = true;
     private volatile long mDelayTime = 2000;
-    private boolean isRestData = false;
+    private boolean isResetData = false;
     private WeakHandler mHandler = new WeakHandler();
     private BannerPagerClickListener mBannerPagerClickListener;
     private BannerOnPagerChangeListener meOnPagerChangeListener;
-    private BaseIndicatorIF mIndicatorManager;
-    private boolean mShowIndicator = true;
-    private ViewGroup mIndicatorContainer;
-    private Drawable mSelectedIndicatorDrawable;
-    private View mDefaultIndicator;
     private int mPrePosition = -1;
     private int mOffscreenPageLimit;
+    private IBaseIndicator mBaseIndicator;
+    private boolean mUserIndicator = false;
 
     public void setBannerPagerClickListener(BannerPagerClickListener bannerPagerClickListener) {
         this.mBannerPagerClickListener = bannerPagerClickListener;
@@ -86,82 +83,86 @@ public class BannerView extends FrameLayout {
         this.meOnPagerChangeListener = bannerPagerClickListener;
     }
 
-    public BannerView showIndicator(boolean mShowIndicator) {
-        this.mShowIndicator = mShowIndicator;
-        return this;
-    }
 
-    public BannerView setViewPagerOffscreenPageLimit(int mOffscreenPageLimit) {
+    public BannerViewLayout setViewPagerOffscreenPageLimit(int mOffscreenPageLimit) {
         this.mOffscreenPageLimit = mOffscreenPageLimit + addViewCount;
         return this;
     }
 
-    public BannerView setViewpagerMargin(int margin) {
+    public BannerViewLayout setViewpagerMargin(int margin) {
         mViewPager.setPageMargin(margin);
         return this;
     }
 
-    public BannerView autoPlay(boolean autoPlay) {
+    public BannerViewLayout autoPlay(boolean autoPlay) {
         isAutoPlay = autoPlay;
         return this;
     }
 
-    public BannerView setDelayTimeForMillis(long delayTime) {
+    public BannerViewLayout setIndicator(IBaseIndicator baseIndicatorImpl) {
+        if (null == baseIndicatorImpl) {
+            return this;
+        }
+        this.mUserIndicator = true;
+        this.mBaseIndicator = baseIndicatorImpl;
+        return this;
+    }
+
+    public BannerViewLayout setDelayTimeForMillis(long delayTime) {
         this.mDelayTime = delayTime;
         return this;
     }
 
-    public BannerView setDelayTimeForSecond(int second) {
+    public BannerViewLayout setDelayTimeForSecond(int second) {
         this.mDelayTime = second * 1000;
         return this;
     }
 
-    public BannerView setImageLoad(BaseImageLoadIF mImageLoad) {
+    public BannerViewLayout setImageLoad(IBaseImageLoad mImageLoad) {
         this.mImageLoad = mImageLoad;
         return this;
     }
 
-    public BannerView setStartPosition(int startPosition) {
+    public BannerViewLayout setStartPosition(int startPosition) {
         this.mStartPosition = startPosition + 2;
-
         return this;
     }
 
-    public BannerView setScaleType(ImageView.ScaleType scaleType) {
+    public BannerViewLayout setScaleType(ImageView.ScaleType scaleType) {
         this.mScaleType = scaleType;
         return this;
     }
 
-    public BannerView setImagRecs(List<Integer> data) {
+    public BannerViewLayout setImagRecs(List<Integer> data) {
         clearData();
         this.mImagUrls.addAll(data);
         return this;
     }
 
-    public BannerView setImagUrls(List<?> data) {
+    public BannerViewLayout setImagUrls(List<?> data) {
         clearData();
         this.mImagUrls.addAll(data);
         return this;
     }
 
-    public BannerView setViewPagerLayoutParams(LayoutParams layoutParams) {
+    public BannerViewLayout setViewPagerLayoutParams(LayoutParams layoutParams) {
         layoutParams.gravity = Gravity.CENTER;
         mViewPager.setLayoutParams(layoutParams);
         return this;
     }
 
-    public BannerView addPagerTransformer(ABaseTransformer transformer) {
+    public BannerViewLayout addPagerTransformer(ABaseTransformer transformer) {
         mViewPager.setPageTransformer(true, transformer);
         return this;
     }
 
-    public BannerView setOffscreenPageLimit(int limit) {
+    public BannerViewLayout setOffscreenPageLimit(int limit) {
         mViewPager.setOffscreenPageLimit(limit);
         return this;
     }
 
-    private BaseImageLoadIF getImageLoad() {
-        return new BannerImageLoad();
+    private IBaseImageLoad getImageLoad() {
+        return new BannerImageLoadImpl();
     }
 
     private void init(Context context, AttributeSet attrs) {
@@ -181,41 +182,6 @@ public class BannerView extends FrameLayout {
         }
     }
 
-    public BannerView setIndicatorManager(BaseIndicatorIF indicatorManager) {
-        mIndicatorManager = indicatorManager;
-        createIndicator();
-        return this;
-    }
-
-
-    public BannerView setIndicatorManager(String flag) {
-        switch (flag) {
-            case BannerConstant.INDICATOR_DEFAULT:
-                mIndicatorManager = new BannerIndicatorManager(getContext().getApplicationContext());
-                break;
-        }
-        createIndicator();
-        return this;
-    }
-
-    private void createIndicator() {
-        if (mIndicatorManager == null) return;
-
-        mIndicatorContainer = (ViewGroup) mIndicatorManager.indicatorContainerLayout(this);
-
-        if (mIndicatorContainer == null) return;
-
-        LayoutParams indicatorLS = (LayoutParams) mIndicatorContainer.getLayoutParams();
-        indicatorLS.gravity = Gravity.BOTTOM;
-        mIndicatorContainer.setLayoutParams(indicatorLS);
-
-        //再容器初始化之后 再初始化这俩
-        mSelectedIndicatorDrawable = mIndicatorManager.selectedIndicatorRec(getContext(), mIndicatorContainer);
-
-        mDefaultIndicator = mIndicatorManager.defaultIndicatorLayout(mIndicatorContainer);
-    }
-
-
     public void reset(List<String> imageUrl) {
         if (null == imageUrl) return;
         if (mOffscreenPageLimit >= (imageUrl.size() + addViewCount)) {
@@ -224,7 +190,7 @@ public class BannerView extends FrameLayout {
         if (mStartPosition >= imageUrl.size()) {
             mStartPosition = 2;
         }
-        isRestData = true;
+        isResetData = true;
         clearData();
         this.mImagUrls.addAll(imageUrl);
         create();
@@ -260,43 +226,40 @@ public class BannerView extends FrameLayout {
     }
 
     public void create() {
-        try {
-            if (mImagUrls == null || mImagUrls.size() <= 0) {
-                throw new NullPointerException(" Error  图片资源为空");
-            }
-            addIndicator();
-            setImageData(mImagUrls);
-            setViewPagerData();
-            if (isRestData) {
-                startAutoRuning();
-            }
-        } catch (Exception e) {
-            Log.e("WANG", "Error" + e);
+        if (mImagUrls == null || mImagUrls.size() <= 0) {
+            return;
+        }
+        initIndicator();
+        setImageData(mImagUrls);
+        setViewPagerData();
+        if (isResetData) {
+            startAutoRuning();
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    private void addIndicator() {
-        if (!mShowIndicator || null == mIndicatorManager) return;
-        View child = getChildAt(1);
-        if (null == child) {
-            this.addView(mIndicatorContainer, 1);
+    private void initIndicator() {
+        if (!mUserIndicator) return;
+
+        for (int i = 0; i < getChildCount(); i++) {
+            View child = getChildAt(i);
+            String tag = (String) child.getTag();
+            if (!TextUtils.isEmpty(tag) && mIndicatorTAG.equals(tag) && child instanceof ViewGroup) {
+                mUserIndicator = true;
+                mBaseIndicator.attachBannerView(getContext(), (ViewGroup) child);
+                return;
+            } else {
+                mUserIndicator = false;
+            }
         }
-        mIndicatorContainer.removeAllViews();
-        for (int i = 0; i < mImagUrls.size(); i++) {
-            View mDefaultIndicator = mIndicatorManager.defaultIndicatorLayout(mIndicatorContainer);
-            mIndicatorContainer.addView(mDefaultIndicator);
-        }
-        int realPosition = getRealPosition(mStartPosition);
-        mIndicatorContainer.getChildAt(realPosition).setBackground(mSelectedIndicatorDrawable);
-        mPrePosition = realPosition;
     }
+
 
     private void setImageData(List<Object> data) {
         mCount = data.size();
         if (mCount <= 0) {
-            throw new NullPointerException("Error  图片资源为空");
+            return;
         }
+        if (mUserIndicator) mBaseIndicator.ViewCount(mCount);
         for (int i = 0; i < mCount + addViewCount; i++) {
             if (null == mImageLoad) {
                 mImageLoad = getImageLoad();
@@ -304,7 +267,7 @@ public class BannerView extends FrameLayout {
             ViewGroup view = (ViewGroup) mImageLoad.createImageView(getContext(), this, mScaleType);
             View child = view.getChildAt(0);
             if (null != child && !(child instanceof ImageView)) {
-                throw new NullPointerException("图片布局有误");
+                return;
             }
             ImageView imageView = (ImageView) child;
             Object url;
@@ -343,6 +306,11 @@ public class BannerView extends FrameLayout {
         mViewPager.setCurrentItem(mStartPosition);
         mViewPager.setOffscreenPageLimit(mOffscreenPageLimit);
         mViewPager.setFocusable(true);
+        if (mUserIndicator) {
+            int realPosition = getRealPosition(mStartPosition);
+            mBaseIndicator.currentSelectedPage(realPosition);
+            mPrePosition = realPosition;
+        }
     }
 
     private void initImageViewListener() {
@@ -350,7 +318,7 @@ public class BannerView extends FrameLayout {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 int realPosition = position - addNumber;
-                //总会先走一次
+                //设置点击事件的时候会 过滤掉
                 if (hasWindowFocus() && meOnPagerChangeListener != null) {
                     meOnPagerChangeListener.onPageScrolled(realPosition, positionOffset, positionOffsetPixels);
                 }
@@ -363,11 +331,11 @@ public class BannerView extends FrameLayout {
                 if (!hasWindowFocus()) return;
                 int realPosition = getRealPosition(position);
                 if (realPosition == mPrePosition) return;
-                if (mIndicatorContainer != null && mIndicatorContainer.getChildCount() > 0) {
-                    mIndicatorContainer.getChildAt(realPosition).setBackground(mSelectedIndicatorDrawable);
+                if (mUserIndicator) {
                     if (mPrePosition >= 0) {
-                        mIndicatorContainer.getChildAt(mPrePosition).setBackground(mDefaultIndicator.getBackground());
+                        mBaseIndicator.preSelectedPage(mPrePosition);
                     }
+                    mBaseIndicator.currentSelectedPage(realPosition);
                     mPrePosition = realPosition;
                 }
                 if (meOnPagerChangeListener != null) {

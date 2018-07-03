@@ -9,7 +9,7 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 
-import cn.example.wang.bannermodule.base.BaseImageLoadIF;
+import cn.example.wang.bannermodule.base.IBaseImageLoad;
 import cn.example.wang.bannermodule.listener.BannerPagerClickListener;
 
 /**
@@ -17,7 +17,7 @@ import cn.example.wang.bannermodule.listener.BannerPagerClickListener;
  * 如果用户需要 可以自己更改里面的逻辑 不能修改返回值
  */
 
-public class BannerImageLoad implements BaseImageLoadIF {
+public class BannerImageLoadImpl implements IBaseImageLoad {
 
 
     @Override

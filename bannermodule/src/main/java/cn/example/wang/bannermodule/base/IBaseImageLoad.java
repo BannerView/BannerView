@@ -11,7 +11,7 @@ import cn.example.wang.bannermodule.listener.BannerPagerClickListener;
  * Created by WANG on 2018/5/18.
  */
 
-public interface BaseImageLoadIF {
+public interface IBaseImageLoad {
 
     /**
      * 创建展示的View

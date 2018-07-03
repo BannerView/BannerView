@@ -10,15 +10,16 @@ import android.widget.FrameLayout;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.example.wang.bannermodule.BannerIndicatorManagerImpl;
 import cn.example.wang.bannermodule.listener.BannerOnPagerChangeListener;
 import cn.example.wang.bannermodule.listener.BannerPagerClickListener;
-import cn.example.wang.bannermodule.view.BannerView;
+import cn.example.wang.bannermodule.view.BannerViewLayout;
 
 
 public class MainActivity extends AppCompatActivity {
 
     //添加注释
-    BannerView bannerView;
+    BannerViewLayout bannerView;
     List<String> imageurls;
     List<Integer> recLists;
     @Override
@@ -65,9 +66,9 @@ public class MainActivity extends AppCompatActivity {
                 .setViewPagerLayoutParams(layoutParams)
                 .setViewpagerMargin(dip2px(this,10))
                 .setStartPosition(0)
+                .setIndicator(new BannerIndicatorManagerImpl())
                 .setImagUrls(imageurls)
                 .autoPlay(false)
-                .setViewPagerOffscreenPageLimit(imageurls.size())
                 .setDelayTimeForMillis(2000)
                 .create();
 
